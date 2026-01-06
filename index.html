@@ -16,16 +16,20 @@ let useCamera = false;
 let cols = 22;
 let rows = 14;
 let cw = [], rh = [], tw = [], th = [];
-let lastImage = null;
 
 function preload() {
-  stillImg = loadImage("01.png", () => {}, () => useCamera = true);
+  stillImg = loadImage("assets/01.png", () => {
+    useCamera = false;
+  }, () => {
+    useCamera = true;
+  });
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   noStroke();
   noCursor();
+
   for (let i = 0; i < cols; i++) cw[i] = 1;
   for (let j = 0; j < rows; j++) rh[j] = 1;
 
@@ -37,7 +41,7 @@ function setup() {
 function draw() {
   background(0);
   const src = useCamera ? cam : stillImg;
-  if (!src) return;
+  if (!src || !src.width || !src.height) return;
 
   updateSizes(millis() * 0.001, width, height);
 
@@ -48,14 +52,17 @@ function draw() {
       let dw = cw[c], dh = rh[r];
       let u = noise(c * 0.17, r * 0.17, frameCount * 0.01);
       let v = noise(c * 0.19 + 100, r * 0.19 + 100, frameCount * 0.01);
-      let sScaleW = map(noise(c * 0.13 + 200, r * 0.13 + 200, frameCount * 0.005), 0, 1, 0.35, 1.7);
-      let sScaleH = map(noise(c * 0.11 + 300, r * 0.11 + 300, frameCount * 0.005), 0, 1, 0.35, 1.7);
+      let sScaleW = map(noise(c * 0.13 + 200, r * 0.13 + 200, frameCount * 0.005), 0, 1, 0.35, 1.0);
+      let sScaleH = map(noise(c * 0.11 + 300, r * 0.11 + 300, frameCount * 0.005), 0, 1, 0.35, 1.0);
 
-      let sw = max(6, int((dw / width) * src.width * sScaleW));
-      let sh = max(6, int((dh / height) * src.height * sScaleH));
+      let sw = constrain(int((dw / width) * src.width * sScaleW), 1, src.width);
+      let sh = constrain(int((dh / height) * src.height * sScaleH), 1, src.height);
 
-      let sx = int(u * max(1, src.width - sw));
-      let sy = int(v * max(1, src.height - sh));
+      let sx = int(u * (src.width - sw));
+      let sy = int(v * (src.height - sh));
+
+      sx = constrain(sx, 0, src.width - sw);
+      sy = constrain(sy, 0, src.height - sh);
 
       image(src, x, y, dw, dh, sx, sy, sx + sw, sy + sh);
       x += dw;
@@ -113,7 +120,6 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  setupGrid();
 }
 </script>
 </body>
