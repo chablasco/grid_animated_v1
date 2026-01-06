@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CB Grid Animated v1</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<script>
+let cam, stillImg;
+let useCamera = false;
+let cols = 22;
+let rows = 14;
+let cw = [], rh = [], tw = [], th = [];
+let lastImage = null;
+
+function preload() {
+  stillImg = loadImage("01.png", () => {}, () => useCamera = true);
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+  for (let i = 0; i < cols; i++) cw[i] = 1;
+  for (let j = 0; j < rows; j++) rh[j] = 1;
+
+  cam = createCapture(VIDEO);
+  cam.size(640, 480);
+  cam.hide();
+}
+
+function draw() {
+  background(0);
+  const src = useCamera ? cam : stillImg;
+  if (!src) return;
+
+  updateSizes(millis() * 0.001, width, height);
+
+  let y = 0;
+  for (let r = 0; r < rows; r++) {
+    let x = 0;
+    for (let c = 0; c < cols; c++) {
+      let dw = cw[c], dh = rh[r];
+      let u = noise(c * 0.17, r * 0.17, frameCount * 0.01);
+      let v = noise(c * 0.19 + 100, r * 0.19 + 100, frameCount * 0.01);
+      let sScaleW = map(noise(c * 0.13 + 200, r * 0.13 + 200, frameCount * 0.005), 0, 1, 0.35, 1.7);
+      let sScaleH = map(noise(c * 0.11 + 300, r * 0.11 + 300, frameCount * 0.005), 0, 1, 0.35, 1.7);
+
+      let sw = max(6, int((dw / width) * src.width * sScaleW));
+      let sh = max(6, int((dh / height) * src.height * sScaleH));
+
+      let sx = int(u * max(1, src.width - sw));
+      let sy = int(v * max(1, src.height - sh));
+
+      image(src, x, y, dw, dh, sx, sy, sx + sw, sy + sh);
+      x += dw;
+    }
+    y += rh[r];
+  }
+
+  fill(255);
+  textSize(14);
+  textAlign(LEFT, TOP);
+  text(useCamera ? "CAMERA (press I for image)" : "IMAGE (press C for camera)", 10, 10);
+}
+
+function updateSizes(t, targetW, targetH) {
+  let sumW = 0, sumH = 0;
+  for (let i = 0; i < cols; i++) {
+    tw[i] = 0.2 + noise(i * 0.22, t * 0.55) * 1.8;
+    sumW += tw[i];
+  }
+  for (let j = 0; j < rows; j++) {
+    th[j] = 0.2 + noise(50 + j * 0.22, t * 0.52) * 1.8;
+    sumH += th[j];
+  }
+  for (let i = 0; i < cols; i++) tw[i] = (tw[i] / sumW) * targetW;
+  for (let j = 0; j < rows; j++) th[j] = (th[j] / sumH) * targetH;
+
+  let a = 0.08;
+  for (let i = 0; i < cols; i++) cw[i] = lerp(cw[i], tw[i], a);
+  for (let j = 0; j < rows; j++) rh[j] = lerp(rh[j], th[j], a);
+}
+
+function keyPressed() {
+  if (key === 'c' || key === 'C') {
+    useCamera = true;
+  }
+  if (key === 'i' || key === 'I') {
+    useCamera = false;
+    let input = createFileInput(handleFile);
+    input.hide();
+    input.elt.accept = 'image/*';
+    input.elt.click();
+  }
+}
+
+function handleFile(file) {
+  if (file.type === 'image') {
+    stillImg = loadImage(file.data);
+    useCamera = false;
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>
