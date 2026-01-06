@@ -11,18 +11,13 @@
 </head>
 <body>
 <script>
-let cam, stillImg;
-let useCamera = false;
-let cols = 22;
-let rows = 14;
+let stillImg;
+const cols = 22;
+const rows = 14;
 let cw = [], rh = [], tw = [], th = [];
 
 function preload() {
-  stillImg = loadImage("assets/02.png", () => {
-    useCamera = false;
-  }, () => {
-    useCamera = true;
-  });
+  stillImg = loadImage("assets/02.png");
 }
 
 function setup() {
@@ -32,16 +27,11 @@ function setup() {
 
   for (let i = 0; i < cols; i++) cw[i] = 1;
   for (let j = 0; j < rows; j++) rh[j] = 1;
-
-  cam = createCapture(VIDEO);
-  cam.size(640, 480);
-  cam.hide();
 }
 
 function draw() {
   background(0);
-  const src = useCamera ? cam : stillImg;
-  if (!src || !src.width || !src.height) return;
+  if (!stillImg || !stillImg.width || !stillImg.height) return;
 
   updateSizes(millis() * 0.001, width, height);
 
@@ -51,22 +41,17 @@ function draw() {
     for (let c = 0; c < cols; c++) {
       let dw = cw[c], dh = rh[r];
 
-      // Sample the correct proportional area of the image
-      let sx = (c / cols) * src.width;
-      let sy = (r / rows) * src.height;
-      let sw = src.width / cols;
-      let sh = src.height / rows;
+      // Map each grid cell directly to a proportional area of the image
+      let sx = (c / cols) * stillImg.width;
+      let sy = (r / rows) * stillImg.height;
+      let sw = stillImg.width / cols;
+      let sh = stillImg.height / rows;
 
-      image(src, x, y, dw, dh, sx, sy, sw, sh);
+      image(stillImg, x, y, dw, dh, sx, sy, sw, sh);
       x += dw;
     }
     y += rh[r];
   }
-
-  fill(255);
-  textSize(14);
-  textAlign(LEFT, TOP);
-  text(useCamera ? "CAMERA (press I for image)" : "IMAGE (press C for camera)", 10, 10);
 }
 
 function updateSizes(t, targetW, targetH) {
@@ -85,26 +70,6 @@ function updateSizes(t, targetW, targetH) {
   let a = 0.08;
   for (let i = 0; i < cols; i++) cw[i] = lerp(cw[i], tw[i], a);
   for (let j = 0; j < rows; j++) rh[j] = lerp(rh[j], th[j], a);
-}
-
-function keyPressed() {
-  if (key === 'c' || key === 'C') {
-    useCamera = true;
-  }
-  if (key === 'i' || key === 'I') {
-    useCamera = false;
-    let input = createFileInput(handleFile);
-    input.hide();
-    input.elt.accept = 'image/*';
-    input.elt.click();
-  }
-}
-
-function handleFile(file) {
-  if (file.type === 'image') {
-    stillImg = loadImage(file.data);
-    useCamera = false;
-  }
 }
 
 function mousePressed() {
