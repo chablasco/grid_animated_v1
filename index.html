@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CB Animated Grid v1</title>
+  <title>CB Grid Fixed Sampling</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; background: black; }
@@ -50,21 +50,14 @@ function draw() {
     let x = 0;
     for (let c = 0; c < cols; c++) {
       let dw = cw[c], dh = rh[r];
-      let u = noise(c * 0.17, r * 0.17, frameCount * 0.01);
-      let v = noise(c * 0.19 + 100, r * 0.19 + 100, frameCount * 0.01);
-      let sScaleW = map(noise(c * 0.13 + 200, r * 0.13 + 200, frameCount * 0.005), 0, 1, 0.35, 1.0);
-      let sScaleH = map(noise(c * 0.11 + 300, r * 0.11 + 300, frameCount * 0.005), 0, 1, 0.35, 1.0);
 
-      let sw = constrain(int((dw / width) * src.width * sScaleW), 1, src.width);
-      let sh = constrain(int((dh / height) * src.height * sScaleH), 1, src.height);
+      // Sample the correct proportional area of the image
+      let sx = (c / cols) * src.width;
+      let sy = (r / rows) * src.height;
+      let sw = src.width / cols;
+      let sh = src.height / rows;
 
-      let sx = int(u * (src.width - sw));
-      let sy = int(v * (src.height - sh));
-
-      sx = constrain(sx, 0, src.width - sw);
-      sy = constrain(sy, 0, src.height - sh);
-
-      image(src, x, y, dw, dh, sx, sy, sx + sw, sy + sh);
+      image(src, x, y, dw, dh, sx, sy, sw, sh);
       x += dw;
     }
     y += rh[r];
